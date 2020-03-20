@@ -1,17 +1,23 @@
-# httpapi
+# io
 
-**httpapi** is a simple Node.js HTTP wrapper for API calls.
+**io** is a simple Node.js HTTP wrapper for API calls.
 
 Methods supported are...
 
 ```javascript
-const httpapi = require('httpapi');
+const io = require('io');
 
-httpapi.request(method, url, queryParams = {}, headers = null, body = null);
-httpapi.get(url, authorization = null, headers = null, queryParams = {});
-httpapi.del(url, authorization = null, headers = null, queryParams = {});
-httpapi.post(url, authorization = null, headers = null, params = {});
-httpapi.put(url, authorization = null, headers = null, params = {});
+io.request(method, url, queryParams = {}, headers = null, body = null);
+io.get(url, authorization = null, headers = null, queryParams = {});
+io.del(url, authorization = null, headers = null, queryParams = {});
+io.post(url, authorization = null, headers = null, params = {});
+io.put(url, authorization = null, headers = null, params = {});
+```
+
+All requests return a `Promise` and can be run synchronously using `await`.
+
+```javascript
+let result = await io.request(method, url, queryParams = {}, headers = null, body = null);
 ```
 
 ## request

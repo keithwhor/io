@@ -18,7 +18,7 @@ class FSGateway extends Gateway {
   }
 }
 
-const FaaSGateway = new FSGateway({debug: true, root: ROOT});
+const FaaSGateway = new FSGateway({debug: false/* true */, root: ROOT});
 const parser = new FunctionParser();
 
 before(async () => {
@@ -30,7 +30,7 @@ after(async () => {
   FaaSGateway.close();
 });
 
-describe('http.api.request', async () => {
+describe('io.request', async () => {
 
   // request - GET
 
@@ -316,7 +316,7 @@ describe('http.api.request', async () => {
 
 });
 
-describe('http.api.get', async () => {
+describe('io.get', async () => {
 
   // request - GET
 
@@ -409,7 +409,7 @@ describe('http.api.get', async () => {
 
 });
 
-describe('http.api.del', async () => {
+describe('io.del', async () => {
 
   // request - DELETE
 
@@ -502,7 +502,7 @@ describe('http.api.del', async () => {
 
 });
 
-describe('http.api.post', async () => {
+describe('io.post', async () => {
 
   // request - POST
 
