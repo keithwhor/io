@@ -1,11 +1,11 @@
-# http.api
+# httpapi
 
-**http.api** is a simple Node.js HTTP wrapper for API calls.
+**httpapi** is a simple Node.js HTTP wrapper for API calls.
 
 Methods supported are...
 
 ```javascript
-const httpapi = require('http.api');
+const httpapi = require('httpapi');
 
 httpapi.request(method, url, queryParams = {}, headers = null, body = null);
 httpapi.get(url, authorization = null, headers = null, queryParams = {});

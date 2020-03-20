@@ -1,5 +1,5 @@
 {
-  "name": "http.api",
+  "name": "httpapi",
   "version": "0.0.0",
   "description": "Simple HTTP API: GET, POST, PUT, DELETE",
   "main": "index.js",
