@@ -165,7 +165,7 @@ class APIResourceRequest {
       )
       .on('error', (err) => reject(new Error(`Server unavailable: ${method} ${this.parent.host}:${this.parent.port}${url}`)))
       .end(
-        method === 'POST' || method === 'PUT'
+        method === 'POST' || method === 'PUT' || method === 'PATCH'
         ? data || null
         : null
       );
