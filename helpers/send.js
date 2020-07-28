@@ -1,5 +1,5 @@
 const APIResource = require('./resource.js');
-const ALLOWED_METHODS = ['GET', 'POST', 'PUT', 'DELETE'];
+const ALLOWED_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
 
 module.exports = async (
   method,

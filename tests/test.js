@@ -15,6 +15,7 @@ class FSGateway extends Gateway {
     super(cfg);
     this.supportedMethods['DELETE'] = true;
     this.supportedMethods['PUT'] = true;
+    this.supportedMethods['PATCH'] = true;
   }
 }
 
@@ -308,6 +309,67 @@ describe('io.request', async () => {
 
     expect(data.http.headers['content-type'].split(';')[0]).to.equal('application/json');
     expect(data.http.method).to.equal('PUT');
+    expect(data.params.test).to.equal('hah');
+    expect(data.http.headers['x-test']).to.equal('true');
+    expect(data.http.body).to.equal('{"test":"hah"}');
+
+  });
+
+  // request - PATCH
+
+  it ('Should make a generic HTTP request with PATCH method', async () => {
+
+    let result = await httpAPI.request('PATCH', REQUEST_URL, null, {'content-type': 'application/json'});
+
+    expect(result).to.exist;
+    expect(result.statusCode).to.equal(200);
+    expect(result.headers).to.haveOwnProperty('x-functionscript');
+    expect(result.headers['content-type'].split(';')[0]).to.equal('application/json');
+    expect(result.body).to.exist;
+    expect(result.body).to.be.instanceof(Buffer);
+
+    let data = JSON.parse(result.body.toString());
+
+    expect(data.http.headers['content-type'].split(';')[0]).to.equal('application/json');
+    expect(data.http.method).to.equal('PATCH');
+
+  });
+
+  it ('Should make a generic HTTP request with PATCH method and send queryParams and headers', async () => {
+
+    let result = await httpAPI.request('PATCH', REQUEST_URL, {hello: 'world'}, {'content-type': 'application/json', 'x-test': 'true'});
+
+    expect(result).to.exist;
+    expect(result.statusCode).to.equal(200);
+    expect(result.headers).to.haveOwnProperty('x-functionscript');
+    expect(result.headers['content-type'].split(';')[0]).to.equal('application/json');
+    expect(result.body).to.exist;
+    expect(result.body).to.be.instanceof(Buffer);
+
+    let data = JSON.parse(result.body.toString());
+
+    expect(data.http.headers['content-type'].split(';')[0]).to.equal('application/json');
+    expect(data.http.method).to.equal('PATCH');
+    expect(data.params.hello).to.equal('world');
+    expect(data.http.headers['x-test']).to.equal('true');
+
+  });
+
+  it ('Should make a generic HTTP request with PATCH method and send queryParams, headers and body', async () => {
+
+    let result = await httpAPI.request('PATCH', REQUEST_URL, {}, {'content-type': 'application/json', 'x-test': 'true'}, '{"test":"hah"}');
+
+    expect(result).to.exist;
+    expect(result.statusCode).to.equal(200);
+    expect(result.headers).to.haveOwnProperty('x-functionscript');
+    expect(result.headers['content-type'].split(';')[0]).to.equal('application/json');
+    expect(result.body).to.exist;
+    expect(result.body).to.be.instanceof(Buffer);
+
+    let data = JSON.parse(result.body.toString());
+
+    expect(data.http.headers['content-type'].split(';')[0]).to.equal('application/json');
+    expect(data.http.method).to.equal('PATCH');
     expect(data.params.test).to.equal('hah');
     expect(data.http.headers['x-test']).to.equal('true');
     expect(data.http.body).to.equal('{"test":"hah"}');
