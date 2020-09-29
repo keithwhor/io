@@ -117,7 +117,12 @@ class APIResourceRequest {
       }
     }
 
-    let url = `${path}${id ? '/' + id : ''}?${params}`;
+    let url = `${path}${id ? '/' + id : ''}`;
+    if (url.includes('?')) {
+      url = url.endsWith('?') ? `${url}${params}` : `${url}&${params}`;
+    } else {
+      url = `${url}?${params}`;
+    }
 
     let res = await this.__send__(method, url, headers, data);
     let buffers = [];
