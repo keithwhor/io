@@ -28,7 +28,7 @@ module.exports = async (
     : httpIndex + '//'.length;
   let pathname = url.slice(httpIndex).split('/').slice(1).join('/');
   let hostname = pathname
-    ? url.slice(0, url.indexOf(pathname, httpIndex) - 1)
+    ? url.slice(0, url.lastIndexOf(pathname) - 1)
     : url.endsWith('/')
       ? url.slice(0, -1)
       : url;

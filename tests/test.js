@@ -469,6 +469,43 @@ describe('io.get', async () => {
 
   });
 
+  it('Should make a GET request to a URL with a path that contains part of the host', async () => {
+
+    let result = await httpAPI.get(REQUEST_URL + '/local', 'x', {'x-test': 'true'});
+
+    expect(result).to.exist;
+    expect(result.statusCode).to.equal(200);
+    expect(result.headers).to.haveOwnProperty('x-functionscript');
+    expect(result.headers['content-type'].split(';')[0]).to.equal('application/json');
+    expect(result.data).to.exist;
+    expect(result.data).to.be.an('object');
+    expect(result.data.http.headers['content-type'].split(';')[0]).to.equal('application/json');
+    expect(result.data.http.method).to.equal('GET');
+    expect(result.data.http.body).to.equal('');
+    expect(result.data.http.headers['authorization']).to.equal('Bearer x');
+    expect(result.data.http.headers['x-test']).to.equal('true');
+
+  });
+
+
+  it('Should make a GET request to a URL with a path that repeats and contains part of the host', async () => {
+
+    let result = await httpAPI.get(REQUEST_URL + '/local/localhost/', 'x', {'x-test': 'true'});
+
+    expect(result).to.exist;
+    expect(result.statusCode).to.equal(200);
+    expect(result.headers).to.haveOwnProperty('x-functionscript');
+    expect(result.headers['content-type'].split(';')[0]).to.equal('application/json');
+    expect(result.data).to.exist;
+    expect(result.data).to.be.an('object');
+    expect(result.data.http.headers['content-type'].split(';')[0]).to.equal('application/json');
+    expect(result.data.http.method).to.equal('GET');
+    expect(result.data.http.body).to.equal('');
+    expect(result.data.http.headers['authorization']).to.equal('Bearer x');
+    expect(result.data.http.headers['x-test']).to.equal('true');
+
+  });
+
 });
 
 describe('io.del', async () => {
