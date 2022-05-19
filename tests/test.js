@@ -692,4 +692,15 @@ describe('io.post', async () => {
 
   });
 
+  it ('Should make a POST request to an endpoint that returns nothing with a 404', async () => {
+
+    let result = await httpAPI.post(REQUEST_URL + '/return_204/');
+
+    expect(result).to.exist;
+    expect(result.statusCode).to.equal(204);
+    expect(result.headers).to.haveOwnProperty('x-functionscript');
+    expect(result.data).to.not.exist;
+
+  });
+
 });
