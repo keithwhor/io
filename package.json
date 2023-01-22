@@ -1,6 +1,6 @@
 {
   "name": "io",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Simple HTTP API: GET, POST, PUT, DELETE, PATCH",
   "main": "index.js",
   "directories": {
@@ -19,5 +19,8 @@
     "chai": "^4.2.0",
     "functionscript": "^1.2.5",
     "mocha": "^7.1.1"
+  },
+  "dependencies": {
+    "mime": "^3.0.0"
   }
 }

@@ -780,6 +780,7 @@ describe('io.upload', async () => {
   it ('Should make an .upload() POST request and send Authorization: Bearer and other headers + send params', async () => {
 
     let buffer = Buffer.from('some_data');
+    buffer.filename = 'test_file.zip';
     let result = await httpAPI.upload(REQUEST_URL, 'x', {'x-test': 'true'}, {'hello': 'world', 'buf': buffer});
 
     expect(result).to.exist;
@@ -791,6 +792,8 @@ describe('io.upload', async () => {
     expect(result.data.http.headers['content-type'].split(';')[0]).to.equal('multipart/form-data');
     expect(result.data.http.method).to.equal('POST');
     expect(result.data.http.body).to.be.a('string').and.satisfy(str => str.startsWith('--'));
+    expect(result.data.http.body).to.contain(`; filename="${buffer.filename}"\r\n`);
+    expect(result.data.http.body).to.contain(`\r\nContent-Type: application/zip\r\n`);
     expect(result.data.http.headers['authorization']).to.equal('Bearer x');
     expect(result.data.http.headers['x-test']).to.equal('true');
     expect(result.data.params.hello).to.equal('world');
