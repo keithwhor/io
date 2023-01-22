@@ -783,8 +783,6 @@ describe('io.upload', async () => {
     buffer.filename = 'test_file.zip';
     let result = await httpAPI.upload(REQUEST_URL, 'x', {'x-test': 'true'}, {'purpose': 'fine-tune', 'file': buffer});
 
-    console.log(result.data.http.body);
-
     expect(result).to.exist;
     expect(result.statusCode).to.equal(200);
     expect(result.headers).to.haveOwnProperty('x-functionscript');
