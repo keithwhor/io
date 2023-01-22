@@ -781,7 +781,9 @@ describe('io.upload', async () => {
 
     let buffer = Buffer.from('some_data');
     buffer.filename = 'test_file.zip';
-    let result = await httpAPI.upload(REQUEST_URL, 'x', {'x-test': 'true'}, {'hello': 'world', 'buf': buffer});
+    let result = await httpAPI.upload(REQUEST_URL, 'x', {'x-test': 'true'}, {'purpose': 'fine-tune', 'file': buffer});
+
+    console.log(result.data.http.body);
 
     expect(result).to.exist;
     expect(result.statusCode).to.equal(200);
@@ -796,9 +798,9 @@ describe('io.upload', async () => {
     expect(result.data.http.body).to.contain(`\r\nContent-Type: application/zip\r\n`);
     expect(result.data.http.headers['authorization']).to.equal('Bearer x');
     expect(result.data.http.headers['x-test']).to.equal('true');
-    expect(result.data.params.hello).to.equal('world');
-    expect(result.data.params.buf).to.be.an('object');
-    expect(result.data.params.buf._base64).to.equal(buffer.toString('base64'));
+    expect(result.data.params.purpose).to.equal('fine-tune');
+    expect(result.data.params.file).to.be.an('object');
+    expect(result.data.params.file._base64).to.equal(buffer.toString('base64'));
 
   });
 
