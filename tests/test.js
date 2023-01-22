@@ -692,9 +692,116 @@ describe('io.post', async () => {
 
   });
 
-  it ('Should make a POST request to an endpoint that returns nothing with a 404', async () => {
+  it ('Should make a POST request to an endpoint that returns nothing with a 204', async () => {
 
     let result = await httpAPI.post(REQUEST_URL + '/return_204/');
+
+    expect(result).to.exist;
+    expect(result.statusCode).to.equal(204);
+    expect(result.headers).to.haveOwnProperty('x-functionscript');
+    expect(result.data).to.not.exist;
+
+  });
+
+});
+
+describe('io.upload', async () => {
+
+  // request - POST (multipart/form-data)
+
+  it ('Should make an .upload() POST request with content-type multipart/form-data', async () => {
+
+    let result = await httpAPI.upload(REQUEST_URL);
+
+    expect(result).to.exist;
+    expect(result.statusCode).to.equal(200);
+    expect(result.headers).to.haveOwnProperty('x-functionscript');
+    expect(result.headers['content-type'].split(';')[0]).to.equal('application/json');
+    expect(result.data).to.exist;
+    expect(result.data).to.be.an('object');
+    expect(result.data.http.headers['content-type'].split(';')[0]).to.equal('multipart/form-data');
+    expect(result.data.http.method).to.equal('POST');
+    expect(result.data.http.body).to.equal('');
+
+  });
+
+  it ('Should make an .upload() POST request and send Authorization: Bearer header', async () => {
+
+    let result = await httpAPI.upload(REQUEST_URL, 'x');
+
+    expect(result).to.exist;
+    expect(result.statusCode).to.equal(200);
+    expect(result.headers).to.haveOwnProperty('x-functionscript');
+    expect(result.headers['content-type'].split(';')[0]).to.equal('application/json');
+    expect(result.data).to.exist;
+    expect(result.data).to.be.an('object');
+    expect(result.data.http.headers['content-type'].split(';')[0]).to.equal('multipart/form-data');
+    expect(result.data.http.method).to.equal('POST');
+    expect(result.data.http.body).to.equal('');
+    expect(result.data.http.headers['authorization']).to.equal('Bearer x');
+
+  });
+
+  it ('Should make an .upload() POST request and send Authorization: Basic header', async () => {
+
+    let result = await httpAPI.upload(REQUEST_URL, 'Basic x');
+
+    expect(result).to.exist;
+    expect(result.statusCode).to.equal(200);
+    expect(result.headers).to.haveOwnProperty('x-functionscript');
+    expect(result.headers['content-type'].split(';')[0]).to.equal('application/json');
+    expect(result.data).to.exist;
+    expect(result.data).to.be.an('object');
+    expect(result.data.http.headers['content-type'].split(';')[0]).to.equal('multipart/form-data');
+    expect(result.data.http.method).to.equal('POST');
+    expect(result.data.http.body).to.equal('');
+    expect(result.data.http.headers['authorization']).to.equal('Basic x');
+
+  });
+
+  it ('Should make an .upload() POST request and send Authorization: Bearer and other headers', async () => {
+
+    let result = await httpAPI.upload(REQUEST_URL, 'x', {'x-test': 'true'});
+
+    expect(result).to.exist;
+    expect(result.statusCode).to.equal(200);
+    expect(result.headers).to.haveOwnProperty('x-functionscript');
+    expect(result.headers['content-type'].split(';')[0]).to.equal('application/json');
+    expect(result.data).to.exist;
+    expect(result.data).to.be.an('object');
+    expect(result.data.http.headers['content-type'].split(';')[0]).to.equal('multipart/form-data');
+    expect(result.data.http.method).to.equal('POST');
+    expect(result.data.http.body).to.equal('');
+    expect(result.data.http.headers['authorization']).to.equal('Bearer x');
+    expect(result.data.http.headers['x-test']).to.equal('true');
+
+  });
+
+  it ('Should make an .upload() POST request and send Authorization: Bearer and other headers + send params', async () => {
+
+    let buffer = Buffer.from('some_data');
+    let result = await httpAPI.upload(REQUEST_URL, 'x', {'x-test': 'true'}, {'hello': 'world', 'buf': buffer});
+
+    expect(result).to.exist;
+    expect(result.statusCode).to.equal(200);
+    expect(result.headers).to.haveOwnProperty('x-functionscript');
+    expect(result.headers['content-type'].split(';')[0]).to.equal('application/json');
+    expect(result.data).to.exist;
+    expect(result.data).to.be.an('object');
+    expect(result.data.http.headers['content-type'].split(';')[0]).to.equal('multipart/form-data');
+    expect(result.data.http.method).to.equal('POST');
+    expect(result.data.http.body).to.be.a('string').and.satisfy(str => str.startsWith('--'));
+    expect(result.data.http.headers['authorization']).to.equal('Bearer x');
+    expect(result.data.http.headers['x-test']).to.equal('true');
+    expect(result.data.params.hello).to.equal('world');
+    expect(result.data.params.buf).to.be.an('object');
+    expect(result.data.params.buf._base64).to.equal(buffer.toString('base64'));
+
+  });
+
+  it ('Should make an .upload() POST request to an endpoint that returns nothing with a 204', async () => {
+
+    let result = await httpAPI.upload(REQUEST_URL + '/return_204/');
 
     expect(result).to.exist;
     expect(result.statusCode).to.equal(204);
