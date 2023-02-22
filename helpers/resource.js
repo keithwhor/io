@@ -58,12 +58,12 @@ class APIResourceRequest {
 
   /* Request methods */
 
-  async requestJSON (method, id, params, data) {
-    return await this.__request__(true, method, id, params, data);
+  async requestJSON (method, id, params, data, streamListener) {
+    return await this.__request__(true, method, id, params, data, streamListener);
   }
 
-  async request (method, id, params, data) {
-    return await this.__request__(false, method, id, params, data);
+  async request (method, id, params, data, streamListener) {
+    return await this.__request__(false, method, id, params, data, streamListener);
   }
 
   async stream (method, data, onMessage) {
@@ -95,7 +95,51 @@ class APIResourceRequest {
 
   }
 
-  async __request__ (expectJSON, method, id, params, data) {
+  __serverSentEventHandler__ (SSE, chunk, streamListener, expectJSON) {
+    if (SSE.enabled) {
+      let entries;
+      if (chunk) {
+        SSE.processing = Buffer.concat([SSE.processing, chunk]);
+        entries = SSE.processing.toString().split('\n\n');
+        let lastEntry = entries.pop();
+        SSE.processing = Buffer.from(lastEntry);
+      } else {
+        entries = SSE.processing.toString().split('\n\n');
+      }
+      entries
+        .filter(entry => !!entry)
+        .forEach(entry => {
+          let event = '';
+          let data = '';
+          let lines = entry.split('\n').map((line, i) => {
+            let lineData = line.split(': ');
+            let type = lineData[0];
+            let contents = lineData.slice(1).join(': ');
+            if (i === 0 && type === 'event') {
+              event = contents;
+            } else if (type === 'data') {
+              data = data + contents;
+            }
+          });
+          if (expectJSON) {
+            try {
+              data = JSON.parse(data);
+            } catch (e) {
+              data = {_raw: data};
+            }
+          }
+          SSE.events[event] = SSE.events[event] || [];
+          SSE.events[event].push(data);
+          streamListener(event, data);
+        });
+    }
+  }
+
+  async __request__ (expectJSON, method, id, params, data, streamListener) {
+
+    streamListener = typeof streamListener === 'function'
+      ? streamListener
+      : () => {};
 
     params = this.parent.serialize(params, true);
 
@@ -125,28 +169,43 @@ class APIResourceRequest {
     }
 
     let res = await this.__send__(method, url, headers, data);
+    const SSE = {
+      enabled: res.headers['content-type'] === 'text/event-stream',
+      events: {},
+      processing: Buffer.from([])
+    };
+
     let buffers = [];
-    res.on('data', chunk => buffers.push(chunk))
+    res.on('data', chunk => {
+      this.__serverSentEventHandler__(SSE, chunk, streamListener, expectJSON);
+      buffers.push(chunk);
+    });
 
     return new Promise((resolve, reject) => {
       res.on('end', () => {
+
+        this.__serverSentEventHandler__(SSE, null, streamListener, expectJSON);
 
         let body = Buffer.concat(buffers);
         let json = null;
 
         if (expectJSON || (res.headers['content-type'] || '').split(';')[0] === 'application/json') {
-          if (res.statusCode === 204 && body.byteLength === 0) {
-            return resolve({
-              body: body,
-              headers: res.headers,
-              statusCode: res.statusCode
-            });
-          }
-          let str = body.toString();
-          try {
-            json = JSON.parse(str);
-          } catch (e) {
-            return reject(new Error(['Expecting JSON, invalid response:', str].join('\n')));
+          if (SSE.enabled) {
+            json = {events: SSE.events};
+          } else {
+            if (res.statusCode === 204 && body.byteLength === 0) {
+              return resolve({
+                body: body,
+                headers: res.headers,
+                statusCode: res.statusCode
+              });
+            }
+            let str = body.toString();
+            try {
+              json = JSON.parse(str);
+            } catch (e) {
+              return reject(new Error(['Expecting JSON, invalid response:', str].join('\n')));
+            }
           }
         }
 

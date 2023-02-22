@@ -8,7 +8,8 @@ module.exports = async (
   authorization = null,
   headers = null,
   json = null,
-  body = null
+  body = null,
+  streamListener = () => {}
 ) => {
 
   if (ALLOWED_METHODS.indexOf(method) === -1) {
@@ -42,9 +43,9 @@ module.exports = async (
 
   let result;
   if (json) {
-    result = await request.requestJSON(method, null, queryParams, json);
+    result = await request.requestJSON(method, null, queryParams, json, streamListener);
   } else {
-    result = await request.request(method, null, queryParams, Buffer.from(body || ''));
+    result = await request.request(method, null, queryParams, Buffer.from(body || ''), streamListener);
   }
 
   return result;
