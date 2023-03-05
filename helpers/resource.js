@@ -109,28 +109,38 @@ class APIResourceRequest {
       entries
         .filter(entry => !!entry)
         .forEach(entry => {
-          let event = '';
+          let event = 'message';
           let data = '';
+          let id = null;
+          let foundData = false;
           let lines = entry.split('\n').map((line, i) => {
-            let lineData = line.split(': ');
+            let lineData = line.split(':');
             let type = lineData[0];
-            let contents = lineData.slice(1).join(': ');
-            if (i === 0 && type === 'event') {
+            let contents = lineData.slice(1).join(':');
+            if (contents[0] === ' ') {
+              contents = contents.slice(1);
+            }
+            if (type === 'event' && !foundData) {
               event = contents;
+              foundData = true;
             } else if (type === 'data') {
-              data = data + contents;
+              data = (data ? (data + '\n') : '') + contents;
+              foundData = true;
+            } else if (type === 'id' && !id) {
+              id = contents;
             }
           });
           if (expectJSON) {
             try {
               data = JSON.parse(data);
             } catch (e) {
-              data = {_raw: data};
+              // do nothing
             }
           }
+          let eventData = {event, data, id};
           SSE.events[event] = SSE.events[event] || [];
-          SSE.events[event].push(data);
-          streamListener(event, data);
+          SSE.events[event].push(eventData);
+          streamListener(eventData);
         });
     }
   }

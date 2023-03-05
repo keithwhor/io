@@ -39,9 +39,9 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
     OPENAI_API_KEY,
     headers,
     params,
-    (event, data) => {
-      if (!data._raw) {
-        message = message + data.choices[0].text;
+    (eventData) => {
+      if (eventData.data !== '[DONE]') {
+        message = message + eventData.data.choices[0].text;
         message = message.trimStart();
         console.log(message + '\n');
       }

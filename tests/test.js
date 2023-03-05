@@ -813,4 +813,82 @@ describe('io.upload', async () => {
 
   });
 
+  it ('Should make POST request to an endpoint and read it as a text/event-stream', async () => {
+
+    let count = {};
+
+    let result = await httpAPI.post(
+      REQUEST_URL + '/stream_response/',
+      null,
+      {},
+      {},
+      (eventData) => {
+        count[eventData.event] = count[eventData.event] || 0;
+        count[eventData.event] += 1;
+      }
+    );
+
+    expect(result).to.exist;
+    expect(result.statusCode).to.equal(200);
+    expect(result.headers).to.haveOwnProperty('x-functionscript');
+    expect(result.headers['content-type']).to.equal('text/event-stream');
+    expect(result.data).to.exist;
+    expect(result.data.events).to.exist;
+    expect(result.data.events.message).to.be.an('array');
+    expect(result.data.events.message).to.have.length(2);
+    expect(result.data.events.message[0].event).to.equal('message');
+    expect(result.data.events.message[0].data).to.deep.equal({a:1,b:2});
+    expect(result.data.events.message[0].id).to.equal(null);
+    expect(result.data.events.message[1].event).to.equal('message');
+    expect(result.data.events.message[1].data).to.equal('what');
+    expect(result.data.events.message[1].id).to.equal('abc');
+    expect(count.message).to.equal(2);
+    expect(result.data.events.hello).to.be.an('array');
+    expect(result.data.events.hello).to.have.length(1);
+    expect(result.data.events.hello[0].event).to.equal('hello');
+    expect(result.data.events.hello[0].data).to.deep.equal(['1','2',3]);
+    expect(result.data.events.hello[0].id).to.equal(null);
+    expect(count.hello).to.equal(1);
+
+  });
+
+  it ('Should make GET request to an endpoint and read it as a text/event-stream', async () => {
+
+    let count = {};
+
+    let result = await httpAPI.get(
+      REQUEST_URL + '/stream_response/',
+      null,
+      {},
+      {},
+      (eventData) => {
+        count[eventData.event] = count[eventData.event] || 0;
+        count[eventData.event] += 1;
+      }
+    );
+
+    expect(result).to.exist;
+    expect(result.statusCode).to.equal(200);
+    expect(result.headers).to.haveOwnProperty('x-functionscript');
+    expect(result.headers['content-type']).to.equal('text/event-stream');
+    expect(result.data).to.exist;
+    expect(result.data.events).to.exist;
+    expect(result.data.events.message).to.be.an('array');
+    expect(result.data.events.message).to.have.length(2);
+    expect(result.data.events.message[0].event).to.equal('message');
+    expect(result.data.events.message[0].data).to.deep.equal({a:1,b:2});
+    expect(result.data.events.message[0].id).to.equal(null);
+    expect(result.data.events.message[1].event).to.equal('message');
+    expect(result.data.events.message[1].data).to.equal('what');
+    expect(result.data.events.message[1].id).to.equal('abc');
+    expect(count.message).to.equal(2);
+    expect(result.data.events.hello).to.be.an('array');
+    expect(result.data.events.hello).to.have.length(1);
+    expect(result.data.events.hello[0].event).to.equal('hello');
+    expect(result.data.events.hello[0].data).to.deep.equal(['1','2',3]);
+    expect(result.data.events.hello[0].id).to.equal(null);
+    expect(count.hello).to.equal(1);
+
+  });
+
 });
