@@ -100,11 +100,11 @@ class APIResourceRequest {
       let entries;
       if (chunk) {
         SSE.processing = Buffer.concat([SSE.processing, chunk]);
-        entries = SSE.processing.toString().split('\n\n');
+        entries = SSE.processing.toString().replace(/\r\n/gi, '\n').split('\n\n');
         let lastEntry = entries.pop();
         SSE.processing = Buffer.from(lastEntry);
       } else {
-        entries = SSE.processing.toString().split('\n\n');
+        entries = SSE.processing.toString().replace(/\r\n/gi, '\n').split('\n\n');
       }
       entries
         .filter(entry => !!entry)
