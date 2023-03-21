@@ -180,7 +180,10 @@ class APIResourceRequest {
 
     let res = await this.__send__(method, url, headers, data);
     const SSE = {
-      enabled: res.headers['content-type'] === 'text/event-stream',
+      enabled: (
+        res.headers['content-type'] &&
+        res.headers['content-type'].split(';')[0] === 'text/event-stream'
+      ),
       events: {},
       processing: Buffer.from([])
     };
