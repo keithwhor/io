@@ -4,5 +4,6 @@ module.exports = {
   get: require('./lib/get.js'),
   post: require('./lib/post.js'),
   put: require('./lib/put.js'),
+  submit: require('./lib/submit.js'),
   upload: require('./lib/upload.js')
 };

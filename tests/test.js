@@ -705,6 +705,48 @@ describe('io.post', async () => {
 
 });
 
+describe('io.submit', async () => {
+
+  // request - any (multipart/form-data)
+
+  it ('Should make an .submit() POST request with content-type multipart/form-data', async () => {
+
+    let result = await httpAPI.submit('POST', REQUEST_URL);
+
+    expect(result).to.exist;
+    expect(result.statusCode).to.equal(200);
+    expect(result.headers).to.haveOwnProperty('x-functionscript');
+    expect(result.headers['content-type'].split(';')[0]).to.equal('application/json');
+    expect(result.body).to.exist;
+    expect(result.body).to.be.instanceof(Buffer);
+    let json = JSON.parse(result.body);
+    expect(json.http.headers['content-type'].split(';')[0]).to.equal('multipart/form-data');
+    expect(json.http.method).to.equal('POST');
+    expect(json.http.body).to.equal('');
+
+  });
+
+  // request - any (multipart/form-data)
+
+  it ('Should make an .submit() PUT request with content-type multipart/form-data', async () => {
+
+    let result = await httpAPI.submit('PUT', REQUEST_URL);
+
+    expect(result).to.exist;
+    expect(result.statusCode).to.equal(200);
+    expect(result.headers).to.haveOwnProperty('x-functionscript');
+    expect(result.headers['content-type'].split(';')[0]).to.equal('application/json');
+    expect(result.body).to.exist;
+    expect(result.body).to.be.instanceof(Buffer);
+    let json = JSON.parse(result.body);
+    expect(json.http.headers['content-type'].split(';')[0]).to.equal('multipart/form-data');
+    expect(json.http.method).to.equal('PUT');
+    expect(json.http.body).to.equal('');
+
+  });
+
+});
+
 describe('io.upload', async () => {
 
   // request - POST (multipart/form-data)
