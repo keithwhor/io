@@ -836,11 +836,63 @@ describe('io.upload', async () => {
     expect(result.data.http.body).to.be.a('string').and.satisfy(str => str.startsWith('--'));
     expect(result.data.http.body).to.contain(`; filename="${buffer.filename}"\r\n`);
     expect(result.data.http.body).to.contain(`\r\nContent-Type: application/zip\r\n`);
+    expect(result.data.http.body).to.not.contain(`\r\nContent-Transfer-Encoding: `);
     expect(result.data.http.headers['authorization']).to.equal('Bearer x');
     expect(result.data.http.headers['x-test']).to.equal('true');
     expect(result.data.params.purpose).to.equal('fine-tune');
     expect(result.data.params.file).to.be.an('object');
     expect(result.data.params.file._base64).to.equal(buffer.toString('base64'));
+    expect(Buffer.from(result.data.params.file._base64, 'base64').toString()).to.equal('some_data');
+
+  });
+
+  it ('Should make an .upload() POST request with "name", "type" and "encoding"', async () => {
+
+    let buffer = Buffer.from('some_data');
+    buffer.name = 'test_file.zip';
+    buffer.type = 'application/yaml';
+    buffer.encoding = 'binary';
+    let result = await httpAPI.upload(REQUEST_URL, 'x', {'x-test': 'true'}, {'purpose': 'fine-tune', 'file': buffer});
+
+    expect(result).to.exist;
+    expect(result.statusCode).to.equal(200);
+    expect(result.headers).to.haveOwnProperty('x-functionscript');
+    expect(result.headers['content-type'].split(';')[0]).to.equal('application/json');
+    expect(result.data).to.exist;
+    expect(result.data).to.be.an('object');
+    expect(result.data.http.headers['content-type'].split(';')[0]).to.equal('multipart/form-data');
+    expect(result.data.http.method).to.equal('POST');
+    expect(result.data.http.body).to.be.a('string').and.satisfy(str => str.startsWith('--'));
+    expect(result.data.http.body).to.contain(`; filename="${buffer.name}"\r\n`);
+    expect(result.data.http.body).to.contain(`\r\nContent-Type: application/yaml\r\n`);
+    expect(result.data.http.body).to.contain(`\r\nContent-Transfer-Encoding: binary\r\n`);
+    expect(result.data.params.file._base64).to.equal(buffer.toString('base64'));
+    expect(Buffer.from(result.data.params.file._base64, 'base64').toString()).to.equal('some_data');
+
+  });
+
+  it ('Should make an .upload() POST request with "filename", "contentType" and "contentTransferEncoding"', async () => {
+
+    let buffer = Buffer.from('some_data');
+    buffer.filename = 'test_file.zip';
+    buffer.contentType = 'application/yaml';
+    buffer.contentTransferEncoding = 'utf8';
+    let result = await httpAPI.upload(REQUEST_URL, 'x', {'x-test': 'true'}, {'purpose': 'fine-tune', 'file': buffer});
+
+    expect(result).to.exist;
+    expect(result.statusCode).to.equal(200);
+    expect(result.headers).to.haveOwnProperty('x-functionscript');
+    expect(result.headers['content-type'].split(';')[0]).to.equal('application/json');
+    expect(result.data).to.exist;
+    expect(result.data).to.be.an('object');
+    expect(result.data.http.headers['content-type'].split(';')[0]).to.equal('multipart/form-data');
+    expect(result.data.http.method).to.equal('POST');
+    expect(result.data.http.body).to.be.a('string').and.satisfy(str => str.startsWith('--'));
+    expect(result.data.http.body).to.contain(`; filename="${buffer.filename}"\r\n`);
+    expect(result.data.http.body).to.contain(`\r\nContent-Type: application/yaml\r\n`);
+    expect(result.data.http.body).to.contain(`\r\nContent-Transfer-Encoding: utf8\r\n`);
+    expect(result.data.params.file._base64).to.equal(buffer.toString('base64'));
+    expect(Buffer.from(result.data.params.file._base64, 'base64').toString()).to.equal('some_data');
 
   });
 
@@ -854,6 +906,10 @@ describe('io.upload', async () => {
     expect(result.data).to.not.exist;
 
   });
+
+});
+
+describe('text/event-stream', async () => {
 
   it ('Should make POST request to an endpoint and read it as a text/event-stream', async () => {
 
