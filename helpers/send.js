@@ -20,9 +20,6 @@ module.exports = async (
     throw new Error(`URL must be a string.`);
   }
 
-  headers = headers || {};
-  queryParams = queryParams || {};
-
   let httpIndex = url.indexOf('//');
   httpIndex = httpIndex === -1
     ? 0
@@ -33,6 +30,18 @@ module.exports = async (
     : url.endsWith('/')
       ? url.slice(0, -1)
       : url;
+
+  headers = headers || {};
+  queryParams = queryParams || {};
+
+  if (hostname.match(/.localhost(:\d+)?$/)) {
+    let originalHostname;
+    hostname = hostname.replace(/((?:https?:)?\/\/)?(.*?)(:\d+)$/i, ($0, $1, $2, $3) => {
+      originalHostname = $2;
+      return `${$1}localhost${$3}`
+    });
+    headers['host'] = originalHostname;
+  }
 
   let resource = new APIResource(hostname);
   if (authorization) {
