@@ -345,7 +345,13 @@ class APIResource {
     obj = obj || {};
 
     let newObj = {};
-    Object.keys(obj).forEach(k => newObj[k] = URIEncoded ? encodeURIComponent(obj[k]) : obj[k]);
+    Object.keys(obj).forEach(k => {
+      let value = obj[k];
+      if (typeof value === 'object') {
+        value = JSON.stringify(value);
+      }
+      newObj[k] = URIEncoded ? encodeURIComponent(value) : value
+    });
 
     return Object.keys(newObj).map(this.__serialize__.bind(this, newObj, [])).join('&');
 
