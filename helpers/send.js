@@ -40,7 +40,7 @@ module.exports = async (
       originalHostname = $2;
       return `${$1}localhost${$3}`
     });
-    headers['host'] = originalHostname;
+    headers['host'] = headers['host'] || originalHostname;
   }
 
   let resource = new APIResource(hostname);
