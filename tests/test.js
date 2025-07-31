@@ -53,6 +53,21 @@ describe('io.request', async () => {
 
   });
 
+  it ('Should make a generic HTTP request with GET method and timeout', async () => {
+
+    let result, error;
+    try {
+      result = await httpAPI.request('GET', REQUEST_URL, null, null, null, null, { timeout: -1 });
+    } catch (e) {
+      error = e;
+    }
+
+    expect(result).to.not.exist;
+    expect(error).to.exist;
+    expect(error.message).to.equal('Request download timed out: -1ms reached');
+
+  });
+
   it ('Should make a generic HTTP request with GET method and send queryParams', async () => {
 
     let result = await httpAPI.request('GET', REQUEST_URL, {hello: 'world'});
