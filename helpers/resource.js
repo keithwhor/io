@@ -77,7 +77,10 @@ class APIResourceRequest {
     let connectTimeout = (options.hasOwnProperty('connectTimeout') && typeof options.connectTimeout === 'number')
       ? Math.min(Math.max(options.connectTimeout, 0), 600_000)
       : void 0;
-    const opts = { timeout, connectTimeout };
+    let maxBytes = (options.hasOwnProperty('maxBytes') && typeof options.maxBytes === 'number')
+      ? Math.min(Math.max(options.maxBytes, 0), 1_024 * 1_024 * 1_024) // 1GB
+      : void 0;
+    const opts = { timeout, connectTimeout, maxBytes };
 
     let headers = this.__formatHeaders__();
     let url = this.path;
@@ -99,6 +102,11 @@ class APIResourceRequest {
           req.destroy();
           reject(new Error(`Request download timed out: ${opts.timeout}ms reached`));
           return;
+        } else if (opts.maxBytes !== void 0 && buffers.length + chunk.length > opts.maxBytes) {
+          settled = true;
+          req.destroy();
+          reject(new Error(`Request download maximum size exceeded: ${opts.maxBytes} bytes reached`));
+          return;
         }
         buffers.push(chunk);
         onMessage(chunk);
@@ -108,11 +116,6 @@ class APIResourceRequest {
           return;
         }
         settled = true;
-        if (opts.timeout !== void 0 && new Date().valueOf() - startTime > opts.timeout) {
-          req.destroy();
-          reject(new Error(`Request download timed out: ${opts.timeout}ms reached`));
-          return;
-        }
         resolve(Buffer.concat(buffers));
       });
 
@@ -196,7 +199,10 @@ class APIResourceRequest {
     let connectTimeout = (options.hasOwnProperty('connectTimeout') && typeof options.connectTimeout === 'number')
       ? Math.min(Math.max(options.connectTimeout, 0), 600_000)
       : void 0;
-    const opts = { timeout, connectTimeout };
+    let maxBytes = (options.hasOwnProperty('maxBytes') && typeof options.maxBytes === 'number')
+      ? Math.min(Math.max(options.maxBytes, 0), 1_024 * 1_024 * 1_024) // 1GB
+      : void 0;
+    const opts = { timeout, connectTimeout, maxBytes };
 
     params = this.parent.serialize(params, true);
 
@@ -251,6 +257,11 @@ class APIResourceRequest {
           req.destroy();
           reject(new Error(`Request download timed out: ${opts.timeout}ms reached`));
           return;
+        } else if (opts.maxBytes !== void 0 && buffers.length + chunk.length > opts.maxBytes) {
+          settled = true;
+          req.destroy();
+          reject(new Error(`Request download maximum size exceeded: ${opts.maxBytes} bytes reached`));
+          return;
         }
         this.__serverSentEventHandler__(SSE, chunk, streamListener, expectJSON);
         buffers.push(chunk);
@@ -262,11 +273,6 @@ class APIResourceRequest {
           return;
         }
         settled = true;
-        if (opts.timeout !== void 0 && new Date().valueOf() - startTime > opts.timeout) {
-          req.destroy();
-          reject(new Error(`Request download timed out: ${opts.timeout}ms reached`));
-          return;
-        }
 
         this.__serverSentEventHandler__(SSE, null, streamListener, expectJSON);
 

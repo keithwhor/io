@@ -68,6 +68,21 @@ describe('io.request', async () => {
 
   });
 
+  it ('Should make a generic HTTP request with GET method and maxBytes', async () => {
+
+    let result, error;
+    try {
+      result = await httpAPI.request('GET', REQUEST_URL, null, null, null, null, { maxBytes: 0 });
+    } catch (e) {
+      error = e;
+    }
+
+    expect(result).to.not.exist;
+    expect(error).to.exist;
+    expect(error.message).to.equal('Request download maximum size exceeded: 0 bytes reached');
+
+  });
+
   it ('Should make a generic HTTP request with GET method and send queryParams', async () => {
 
     let result = await httpAPI.request('GET', REQUEST_URL, {hello: 'world'});
