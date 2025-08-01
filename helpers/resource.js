@@ -313,34 +313,52 @@ class APIResourceRequest {
 
   async __send__(method, url, headers, data, opts) {
 
+    const params = {
+      headers: headers,
+      host: this.parent.host,
+      method: method,
+      port: this.parent.port,
+      path: url,
+      timeout: opts.connectTimeout
+    };
+
+    if (opts.connectTimeout !== void 0) {
+      params.timeout = opts.connectTimeout;
+    }
+
+    let settled = false;
+
     return new Promise((resolve, reject) => {
       const req = (this.parent.ssl ? https : http).request(
-        {
-          headers: headers,
-          host: this.parent.host,
-          method: method,
-          port: this.parent.port,
-          path: url,
-          timeout: opts.connectTimeout
-        },
-        res => resolve({ req, res })
-      );
-      let settled = false;
-      req.on('timeout', () => {
-        if (settled) {
-          return;
+        params,
+        res => {
+          settled = true;
+          resolve({ req, res })
         }
-        settled = true;
-        req.destroy();
-        reject(new Error(`Request connection timed out: ${opts.timeout}ms reached`));
-        return;
-      });
+      );
+      if (opts.connectTimeout !== void 0) {
+        req.on('timeout', () => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          req.destroy();
+          reject(new Error(`Request connection timed out: ${opts.connectTimeout}ms reached`));
+          return;
+        });
+      }
       req.on('error', (err) => {
         if (settled) {
           return;
         }
         settled = true;
         reject(new Error(`Server unavailable: ${method} ${this.parent.host}:${this.parent.port}${url}`));
+      });
+      req.on('close', () => {
+        if (settled) {
+          return;
+        }
+        settled = true;
       });
       req.end(
         method === 'POST' || method === 'PUT' || method === 'PATCH'
