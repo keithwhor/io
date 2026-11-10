@@ -2,6 +2,7 @@ const httpAPI = require('../index.js');
 
 const chai = require('chai');
 const expect = chai.expect;
+const http = require('http');
 
 const {Gateway, FunctionParser} = require('functionscript');
 
@@ -21,6 +22,49 @@ class FSGateway extends Gateway {
 
 const FaaSGateway = new FSGateway({debug: false/* true */, root: ROOT});
 const parser = new FunctionParser();
+
+describe('Request deadlines', () => {
+  for (const mode of ['headers', 'connection', 'body', 'progress', 'raw stream']) {
+    it(`Closes a stalled ${mode} request at its deadline`, async function () {
+      this.timeout(3000);
+      let disconnected;
+      let progress = 0;
+      const closed = new Promise(resolve => { disconnected = resolve; });
+      const server = http.createServer((req, res) => {
+        res.once('close', disconnected);
+        if (mode !== 'headers' && mode !== 'connection') {
+          res.writeHead(200, { 'Content-Type': 'text/event-stream' });
+          res.flushHeaders();
+        }
+        if (mode === 'progress') {
+          const timer = setInterval(() => res.write('event: progress\ndata: 1\n\n'), 10);
+          res.once('close', () => clearInterval(timer));
+        }
+      });
+      await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+      try {
+        const url = `http://127.0.0.1:${server.address().port}`;
+        let error;
+        try {
+          if (mode === 'raw stream') {
+            const Resource = require('../helpers/resource.js');
+            await new Resource(url).request('/').stream('GET', null, () => {}, { timeout: 100 });
+          } else {
+            await httpAPI.request('GET', url, null, null, null, () => { progress++; }, mode === 'connection' ? { timeout: 1000, connectTimeout: 100 } : { timeout: 100 });
+          }
+        } catch (err) {
+          error = err;
+        }
+        expect(error && error.code).to.equal('ETIMEDOUT');
+        await closed;
+        if (mode === 'progress') expect(progress).to.be.above(1);
+      } finally {
+        server.closeAllConnections();
+        await new Promise(resolve => server.close(resolve));
+      }
+    });
+  }
+});
 
 before(async () => {
   FaaSGateway.listen(PORT);

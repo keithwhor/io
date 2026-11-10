@@ -85,24 +85,22 @@ class APIResourceRequest {
     let headers = this.__formatHeaders__();
     let url = this.path;
 
-    let startTime = new Date().valueOf();
     let { req, res } = await this.__send__(method, url, headers, data, opts);
     let buffers = [];
 
     return new Promise((resolve, reject) => {
 
       let settled = false;
+      res.on('error', err => {
+        settled = true;
+        reject(err);
+      });
 
       res.on('data', chunk => {
         if (settled) {
           return;
         }
-        if (opts.timeout !== void 0 && new Date().valueOf() - startTime > opts.timeout) {
-          settled = true;
-          req.destroy();
-          reject(new Error(`Request download timed out: ${opts.timeout}ms reached`));
-          return;
-        } else if (opts.maxBytes !== void 0 && buffers.length + chunk.length > opts.maxBytes) {
+        if (opts.maxBytes !== void 0 && buffers.length + chunk.length > opts.maxBytes) {
           settled = true;
           req.destroy();
           reject(new Error(`Request download maximum size exceeded: ${opts.maxBytes} bytes reached`));
@@ -231,7 +229,6 @@ class APIResourceRequest {
       url = `${url}?${params}`;
     }
 
-    let startTime = new Date().valueOf();
     let { req, res } = await this.__send__(method, url, headers, data, opts);
     const SSE = {
       enabled: (
@@ -247,17 +244,16 @@ class APIResourceRequest {
     return new Promise((resolve, reject) => {
 
       let settled = false;
+      res.on('error', err => {
+        settled = true;
+        reject(err);
+      });
 
       res.on('data', chunk => {
         if (settled) {
           return;
         }
-        if (opts.timeout !== void 0 && new Date().valueOf() - startTime > opts.timeout) {
-          settled = true;
-          req.destroy();
-          reject(new Error(`Request download timed out: ${opts.timeout}ms reached`));
-          return;
-        } else if (opts.maxBytes !== void 0 && buffers.length + chunk.length > opts.maxBytes) {
+        if (opts.maxBytes !== void 0 && buffers.length + chunk.length > opts.maxBytes) {
           settled = true;
           req.destroy();
           reject(new Error(`Request download maximum size exceeded: ${opts.maxBytes} bytes reached`));
@@ -327,38 +323,57 @@ class APIResourceRequest {
     }
 
     let settled = false;
+    let deadline;
+    let response;
 
     return new Promise((resolve, reject) => {
       const req = (this.parent.ssl ? https : http).request(
         params,
         res => {
+          response = res;
+          res.once('close', () => clearTimeout(deadline));
           settled = true;
           resolve({ req, res })
         }
       );
+      // Unlike a socket inactivity timeout, this deadline includes the whole
+      // response, even when a stream stalls or keeps sending progress events.
+      if (opts.timeout !== void 0) {
+        deadline = setTimeout(() => {
+          const err = new Error(`Request download timed out: ${opts.timeout}ms reached`);
+          err.code = 'ETIMEDOUT';
+          if (response) response.destroy(err);
+          req.destroy(err);
+        }, Math.max(0, opts.timeout));
+      }
       if (opts.connectTimeout !== void 0) {
         req.on('timeout', () => {
           if (settled) {
             return;
           }
           settled = true;
-          req.destroy();
-          reject(new Error(`Request connection timed out: ${opts.connectTimeout}ms reached`));
+          const err = new Error(`Request connection timed out: ${opts.connectTimeout}ms reached`);
+          err.code = 'ETIMEDOUT';
+          req.destroy(err);
+          reject(err);
           return;
         });
       }
       req.on('error', (err) => {
+        clearTimeout(deadline);
         if (settled) {
           return;
         }
         settled = true;
-        reject(new Error(`Server unavailable: ${method} ${this.parent.host}:${this.parent.port}${url}`));
+        reject(err.code === 'ETIMEDOUT' ? err : new Error(`Server unavailable: ${method} ${this.parent.host}:${this.parent.port}${url}`));
       });
       req.on('close', () => {
+        if (!response) clearTimeout(deadline);
         if (settled) {
           return;
         }
         settled = true;
+        reject(new Error(`Request closed before a response: ${method} ${this.parent.host}:${this.parent.port}${url}`));
       });
       req.end(
         method === 'POST' || method === 'PUT' || method === 'PATCH'
